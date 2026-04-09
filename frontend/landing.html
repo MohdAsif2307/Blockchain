@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Data Marketplace</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <!-- ========== SCREEN 1: Landing Page ========== -->
+  <div class="screen active" id="landing">
+    <header class="landing-header">
+      <div class="container">
+        <div class="logo">📊 Data Marketplace</div>
+        <button class="btn-secondary" onclick="navigateTo('login')">Login</button>
+      </div>
+    </header>
+    <main class="hero">
+      <div class="container">
+        <h1>Sell & Buy Data Securely</h1>
+        <p>Monetize your data with privacy-first technology and instant payments.</p>
+        <button class="btn-primary btn-large" onclick="navigateTo('signup')">Sign Up & Get Started</button>
+        <div class="features">
+          <div class="feature">
+            <div class="feature-icon">💰</div>
+            <h3>Monetize Data</h3>
+            <p>Earn from your datasets effortlessly.</p>
+          </div>
+          <div class="feature">
+            <div class="feature-icon">🔒</div>
+            <h3>Privacy-First</h3>
+            <p>Your data stays secure and encrypted.</p>
+          </div>
+          <div class="feature">
+            <div class="feature-icon">⚡</div>
+            <h3>Instant Payments</h3>
+            <p>Get paid immediately upon sale.</p>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ========== SCREEN 2: Login Screen ========== -->
+  <div class="screen" id="login">
+    <div class="auth-container">
+      <div class="auth-card">
+        <button class="back-btn" onclick="navigateTo('landing')">← Back</button>
+        <h2>🔐 Login</h2>
+        <p class="subtitle">Welcome back to data marketplace</p>
+        
+        <input type="email" placeholder="Email" id="loginEmail" class="profile-input" />
+        <input type="password" placeholder="Password" id="loginPassword" class="profile-input" />
+        
+        <button class="btn-primary btn-block" onclick="handleLogin()">Login</button>
+        
+        <p class="disclaimer" style="margin-top: 20px; text-align: center;">
+          Don't have an account? <a href="javascript:navigateTo('signup')" style="color: #4CAF50; text-decoration: none; font-weight: bold;">Sign Up Here</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== SCREEN 3: Sign Up Screen ========== -->
+  <div class="screen" id="signup">
+    <div class="auth-container">
+      <div class="auth-card">
+        <button class="back-btn" onclick="navigateTo('landing')">← Back</button>
+        <h2>📋 Create Account</h2>
+        <p class="subtitle">Join the data marketplace community</p>
+        
+        <input type="text" placeholder="Username" id="signupUsername" class="profile-input" />
+        <input type="email" placeholder="Email" id="signupEmail" class="profile-input" />
+        <input type="password" placeholder="Password (min. 6 characters)" id="signupPassword" class="profile-input" />
+        <input type="password" placeholder="Confirm Password" id="signupConfirmPassword" class="profile-input" />
+        
+        <button class="btn-primary btn-block" onclick="handleSignup()">Sign Up</button>
+        
+        <p class="disclaimer" style="margin-top: 20px; text-align: center;">
+          Already have an account? <a href="javascript:navigateTo('login')" style="color: #4CAF50; text-decoration: none; font-weight: bold;">Login Here</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== SCREEN 4: Username Setup (Deprecated - keeping for compatibility) ========== -->
+
+  <!-- ========== SCREEN 4: Home Dashboard ========== -->
+  <div class="screen" id="dashboard">
+    <header class="dashboard-header">
+      <div class="container">
+        <div class="logo">📊 Data Marketplace</div>
+        <nav class="dashboard-nav">
+          <button class="nav-btn active" onclick="navigateTo('dashboard')">🏠 Home</button>
+          <button class="nav-btn" onclick="navigateTo('upload')">📤 Sell Data</button>
+          <button class="nav-btn" onclick="navigateTo('profile')">👤 Profile</button>
+          <button class="nav-btn" onclick="navigateTo('notifications')">🔔 Notifications</button>
+          <button class="nav-btn logout" onclick="logout()">🚪 Logout</button>
+        </nav>
+      </div>
+    </header>
+    
+    <main class="container">
+      <!-- Welcome Section -->
+      <div class="welcome-section">
+        <h1>Welcome, <span id="dashboardUsername">User</span>! 👋</h1>
+        <p>Discover datasets and earn money by selling your data</p>
+      </div>
+
+      <!-- Search & Filters -->
+      <div class="search-section">
+        <input type="text" placeholder="🔍 Search datasets..." class="search-bar" id="searchInput" />
+      </div>
+
+      <!-- Categories -->
+      <div class="categories-section">
+        <h3>Categories</h3>
+        <div class="categories">
+          <button class="category" onclick="filterByCategory('AI Data')">🤖 AI Data</button>
+          <button class="category" onclick="filterByCategory('Health')">⚕️ Health</button>
+          <button class="category" onclick="filterByCategory('IoT')">📡 IoT</button>
+          <button class="category" onclick="filterByCategory('All')">All</button>
+        </div>
+      </div>
+
+      <!-- Recommended Datasets -->
+      <section class="recommended-section">
+        <h2>📊 Recommended Datasets</h2>
+        <div class="dataset-grid" id="datasetList">
+          <!-- Dataset cards will be populated here -->
+        </div>
+      </section>
+
+      <!-- Your Earnings Preview -->
+      <section class="earnings-preview">
+        <div class="earnings-card">
+          <h3>Your Earnings</h3>
+          <p class="earnings-amount">₹<span id="totalEarnings">500</span></p>
+          <button class="btn-secondary" onclick="navigateTo('earnings')">View Details →</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ========== SCREEN 5: Dataset Details ========== -->
+  <div class="screen" id="dataset-details">
+    <header class="detail-header">
+      <div class="container">
+        <button class="back-btn" onclick="navigateTo('dashboard')">← Back</button>
+      </div>
+    </header>
+    
+    <div class="container">
+      <div class="detail-container">
+        <div class="detail-content">
+          <h2 id="detail-title">Dataset Title</h2>
+          
+          <div class="detail-meta">
+            <span class="seller-info">
+              👤 <span id="detail-seller">John Doe</span>
+            </span>
+            <span class="rating">
+              ⭐ <span id="detail-rating">4.5</span>/5 (<span id="detail-reviews">120</span> reviews)
+            </span>
+          </div>
+
+          <div class="sample-preview" id="detail-preview">
+            [Sample Data Preview]
+          </div>
+
+          <div class="detail-description">
+            <h3>Description</h3>
+            <p id="detail-description">Description here.</p>
+          </div>
+
+          <div class="detail-stats">
+            <div class="stat">
+              <span class="stat-label">File Size</span>
+              <span class="stat-value" id="detail-size">2.5 MB</span>
+            </div>
+            <div class="stat">
+              <span class="stat-label">Format</span>
+              <span class="stat-value" id="detail-format">CSV, JSON</span>
+            </div>
+            <div class="stat">
+              <span class="stat-label">Records</span>
+              <span class="stat-value" id="detail-records">10,000+</span>
+            </div>
+          </div>
+
+          <div class="detail-footer">
+            <div class="price-section">
+              <p class="label">Price</p>
+              <p class="price">₹<span id="detail-price">100</span></p>
+            </div>
+            <button class="btn-primary btn-large" onclick="navigateTo('payment')">Buy & Download</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== SCREEN 6: Payment Screen ========== -->
+  <div class="screen" id="payment">
+    <header class="detail-header">
+      <div class="container">
+        <button class="back-btn" onclick="navigateTo('dataset-details')">← Back</button>
+      </div>
+    </header>
+    
+    <div class="container">
+      <div class="payment-container">
+        <div class="payment-card">
+          <h2>Payment Details</h2>
+          
+          <div class="order-summary">
+            <h3>Order Summary</h3>
+            <div class="summary-item">
+              <span>Dataset Price</span>
+              <span>₹<span id="paymentPrice">100</span></span>
+            </div>
+            <div class="summary-item">
+              <span>Tax (18%)</span>
+              <span>₹<span id="paymentTax">18</span></span>
+            </div>
+            <div class="summary-total">
+              <span>Total Amount</span>
+              <span>₹<span id="paymentTotal">118</span></span>
+            </div>
+          </div>
+
+          <div class="payment-methods">
+            <h3>Select Payment Method</h3>
+            <div class="methods">
+              <label class="payment-option">
+                <input type="radio" name="payment" value="upi" checked />
+                <span>💳 UPI / Phone Pay</span>
+              </label>
+              <label class="payment-option">
+                <input type="radio" name="payment" value="card" />
+                <span>🏧 Credit / Debit Card</span>
+              </label>
+              <label class="payment-option">
+                <input type="radio" name="payment" value="wallet" />
+                <span>💰 Wallet Balance (₹<span id="walletBalance">250</span>)</span>
+              </label>
+            </div>
+          </div>
+
+          <button class="btn-primary btn-block" onclick="processPayment()">
+            Pay ₹<span id="paymentBtnAmount">118</span>
+          </button>
+          
+          <p class="security-note">🔒 Your payment is secure and encrypted</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== SCREEN 7: Processing Screen ========== -->
+  <div class="screen" id="processing">
+    <div class="container">
+      <div class="processing-container">
+        <div class="processing-card">
+          <h2>Processing Your Payment</h2>
+          
+          <div class="progress-steps">
+            <div class="step active">
+              <div class="step-icon">⏳</div>
+              <p>Processing payment...</p>
+            </div>
+            <div class="step">
+              <div class="step-icon">🔐</div>
+              <p>Securing data access...</p>
+            </div>
+            <div class="step">
+              <div class="step-icon">✅</div>
+              <p>Generating access link...</p>
+            </div>
+          </div>
+
+          <div class="spinner"></div>
+          
+          <p class="processing-text">Please do not close this window...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== SCREEN 8: Download Screen ========== -->
+  <div class="screen" id="download">
+    <header class="detail-header">
+      <div class="container">
+        <button class="back-btn" onclick="navigateTo('dashboard')">← Back to Home</button>
+      </div>
+    </header>
+    
+    <div class="container">
+      <div class="download-container">
+        <div class="success-card">
+          <div class="success-icon">✅</div>
+          <h2>Payment Successful!</h2>
+          <p>Your dataset is ready to download</p>
+
+          <div class="dataset-info">
+            <h3 id="downloadTitle">Dataset Name</h3>
+            <p id="downloadDescription">Dataset description</p>
+          </div>
+
+          <div class="download-actions">
+            <button class="btn-primary btn-block" onclick="downloadFile()">
+              ⬇️ Download File
+            </button>
+            <button class="btn-secondary btn-block" onclick="viewInBrowser()">
+              👁️ View in Browser
+            </button>
+          </div>
+
+          <div class="file-preview" id="filePreview">
+            <h4>File Preview</h4>
+            <p>[Sample data preview will appear here]</p>
+          </div>
+
+          <div class="next-steps">
+            <h4>What's Next?</h4>
+            <ul>
+              <li>✓ Download and save the dataset</li>
+              <li>✓ Check your email for access details</li>
+              <li>✓ Access support if needed</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== SCREEN 9: Upload Data ========== -->
+  <div class="screen" id="upload">
+    <header class="dashboard-header">
+      <div class="container">
+        <div class="logo">📊 Data Marketplace</div>
+        <nav class="dashboard-nav">
+          <button class="nav-btn" onclick="navigateTo('dashboard')">🏠 Home</button>
+          <button class="nav-btn active" onclick="navigateTo('upload')">📤 Sell Data</button>
+          <button class="nav-btn" onclick="navigateTo('profile')">👤 Profile</button>
+          <button class="nav-btn logout" onclick="logout()">🚪 Logout</button>
+        </nav>
+      </div>
+    </header>
+
+    <div class="container">
+      <div class="upload-container">
+        <div class="upload-card">
+          <h2>📤 Upload Your Dataset</h2>
+          <p>Share your data and start earning</p>
+
+          <div class="form-group">
+            <label>Dataset File</label>
+            <div class="file-input-wrapper" onclick="document.getElementById('dataFile').click()">
+              <input type="file" id="dataFile" accept=".csv,.json,.xlsx,.xls" onchange="updateFileLabel()" />
+              <span class="file-input-label" id="fileLabel">📎 Choose File (CSV, JSON, Excel)</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Title</label>
+            <input type="text" placeholder="e.g., Customer Behavior Data" id="uploadTitle" />
+          </div>
+
+          <div class="form-group">
+            <label>Description</label>
+            <textarea placeholder="Describe your dataset in detail..." id="uploadDescription" rows="4"></textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Price (₹)</label>
+              <input type="number" placeholder="100" id="uploadPrice" min="1" />
+            </div>
+            <div class="form-group">
+              <label>Category</label>
+              <select id="uploadCategory">
+                <option>Select Category</option>
+                <option>AI Data</option>
+                <option>Health</option>
+                <option>IoT</option>
+                <option>Finance</option>
+                <option>Other</option>
+              </select>
+            </div>
+          </div>
+
+          <button class="btn-primary btn-block" onclick="uploadDataset()">Upload Dataset</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== SCREEN 10: Encryption Step ========== -->
+  <div class="screen" id="encryption">
+    <div class="container">
+      <div class="encryption-container">
+        <div class="encryption-card">
+          <div class="spinner"></div>
+          <h2>Securing Your Data</h2>
+          <p>Encrypting and uploading to IPFS...</p>
+          
+          <div class="encryption-steps">
+            <div class="enc-step">
+              <div class="enc-icon">🔐</div>
+              <p>Encrypting dataset</p>
+            </div>
+            <div class="enc-step">
+              <div class="enc-icon">📡</div>
+              <p>Uploading to IPFS</p>
+            </div>
+            <div class="enc-step">
+              <div class="enc-icon">⛓️</div>
+              <p>Recording on blockchain</p>
+            </div>
+          </div>
+
+          <p class="security-note">Do not close this window. This may take a few minutes...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== SCREEN 11: Publish Confirmation ========== -->
+  <div class="screen" id="publish">
+    <div class="container">
+      <div class="confirmation-container">
+        <div class="confirmation-card">
+          <div class="success-icon large">🎉</div>
+          <h2>Your Dataset is Live!</h2>
+          <p>Congratulations! Your data is now available for purchase.</p>
+
+          <div class="confirmation-details">
+            <div class="detail-box">
+              <span class="label">Dataset ID</span>
+              <span class="value" id="confirmId">DATA-12345</span>
+            </div>
+            <div class="detail-box">
+              <span class="label">Status</span>
+              <span class="value">✅ Active</span>
+            </div>
+          </div>
+
+          <div class="share-section">
+            <h3>Share Your Dataset</h3>
+            <div class="share-link">
+              <input type="text" value="https://marketplace.example.com/dataset/12345" readonly id="shareLink" />
+              <button class="btn-secondary" onclick="copyShareLink()">📋 Copy Link</button>
+            </div>
+          </div>
+
+          <div class="confirmation-actions">
+            <button class="btn-primary btn-block" onclick="navigateTo('dashboard')">Back to Dashboard</button>
+            <button class="btn-secondary btn-block" onclick="navigateTo('upload')">Upload Another Dataset</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== SCREEN 12: Profile Page ========== -->
+  <div class="screen" id="profile">
+    <header class="dashboard-header">
+      <div class="container">
+        <div class="logo">📊 Data Marketplace</div>
+        <nav class="dashboard-nav">
+          <button class="nav-btn" onclick="navigateTo('dashboard')">🏠 Home</button>
+          <button class="nav-btn" onclick="navigateTo('upload')">📤 Sell Data</button>
+          <button class="nav-btn active" onclick="navigateTo('profile')">👤 Profile</button>
+          <button class="nav-btn logout" onclick="logout()">🚪 Logout</button>
+        </nav>
+      </div>
+    </header>
+
+    <div class="container">
+      <div class="profile-container">
+        <!-- Profile Header -->
+        <div class="profile-header">
+          <img id="profileAvatar" src="https://via.placeholder.com/100" alt="Avatar" class="profile-avatar">
+          <div class="profile-info">
+            <h2 id="profileUsername">ashish.data</h2>
+            <p class="member-since">Member since 2024</p>
+            <div class="profile-stats">
+              <div class="stat">
+                <span class="stat-value" id="profileUploaded">5</span>
+                <span class="stat-label">Datasets Uploaded</span>
+              </div>
+              <div class="stat">
+                <span class="stat-value" id="profilePurchased">8</span>
+                <span class="stat-label">Datasets Purchased</span>
+              </div>
+              <div class="stat">
+                <span class="stat-value" id="profileRating">4.8</span>
+                <span class="stat-label">Rating</span>
+              </div>
+            </div>
+          </div>
+          <button class="btn-secondary" onclick="editProfile()">✏️ Edit Profile</button>
+        </div>
+
+        <div class="profile-content">
+          <!-- Uploaded Datasets -->
+          <section class="profile-section">
+            <h3>📤 Uploaded Datasets</h3>
+            <div class="dataset-list" id="uploadedList">
+              <!-- Will be populated -->
+            </div>
+          </section>
+
+          <!-- Purchased Datasets -->
+          <section class="profile-section">
+            <h3>💾 Purchased Datasets</h3>
+            <div class="dataset-list" id="purchasedList">
+              <!-- Will be populated -->
+            </div>
+          </section>
+
+          <!-- Quick Actions -->
+          <section class="profile-section">
+            <h3>⚙️ Account</h3>
+            <div class="action-buttons">
+              <button class="btn-secondary" onclick="navigateTo('earnings')">View Earnings</button>
+              <button class="btn-secondary" onclick="navigateTo('notifications')">Notifications</button>
+              <button class="btn-secondary" onclick="logout()">Logout</button>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== SCREEN 13: Earnings Dashboard ========== -->
+  <div class="screen" id="earnings">
+    <header class="dashboard-header">
+      <div class="container">
+        <div class="logo">📊 Data Marketplace</div>
+        <nav class="dashboard-nav">
+          <button class="nav-btn" onclick="navigateTo('dashboard')">🏠 Home</button>
+          <button class="nav-btn" onclick="navigateTo('profile')">👤 Profile</button>
+          <button class="nav-btn logout" onclick="logout()">🚪 Logout</button>
+        </nav>
+      </div>
+    </header>
+
+    <div class="container">
+      <div class="earnings-container">
+        <div class="earnings-header">
+          <h1>💰 Earnings Dashboard</h1>
+        </div>
+
+        <!-- Earnings Summary -->
+        <div class="earnings-summary">
+          <div class="summary-card">
+            <h3>Total Earnings</h3>
+            <p class="big-number">₹<span id="totalEarningsAmount">2,500</span></p>
+            <span class="period">This Month</span>
+          </div>
+          <div class="summary-card">
+            <h3>Pending Payout</h3>
+            <p class="big-number">₹<span id="pendingPayout">500</span></p>
+            <span class="period">Available</span>
+          </div>
+          <div class="summary-card">
+            <h3>Transactions</h3>
+            <p class="big-number"><span id="transactionCount">18</span></p>
+            <span class="period">Sales This Month</span>
+          </div>
+        </div>
+
+        <!-- Earnings Chart -->
+        <section class="earnings-section">
+          <h2>📈 Earnings Over Time</h2>
+          <div class="chart-container">
+            <div class="chart-placeholder">
+              [Earnings Graph - April: ₹2500, May: ₹2800, June: ₹3200]
+            </div>
+          </div>
+        </section>
+
+        <!-- Recent Transactions -->
+        <section class="earnings-section">
+          <h2>📋 Recent Transactions</h2>
+          <div class="transaction-list" id="transactionList">
+            <!-- Will be populated -->
+          </div>
+        </section>
+
+        <!-- Withdrawal Section -->
+        <section class="earnings-section">
+          <h2>🏦 Withdraw Earnings</h2>
+          <div class="withdrawal-card">
+            <div class="form-group">
+              <label>Amount to Withdraw</label>
+              <div class="input-group">
+                <span>₹</span>
+                <input type="number" id="withdrawAmount" placeholder="500" min="100" />
+              </div>
+              <small>Minimum ₹100, Available: ₹<span id="availableBalance">500</span></small>
+            </div>
+            <div class="form-group">
+              <label>Bank Account / UPI ID</label>
+              <input type="text" placeholder="your-upi-id@bank" id="withdrawAccount" />
+            </div>
+            <button class="btn-primary btn-block" onclick="requestWithdrawal()">Request Withdrawal</button>
+            <p class="info-note">ℹ️ Withdrawal processed within 24-48 hours</p>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== SCREEN 14: Notifications Panel ========== -->
+  <div class="screen" id="notifications">
+    <header class="dashboard-header">
+      <div class="container">
+        <div class="logo">📊 Data Marketplace</div>
+        <nav class="dashboard-nav">
+          <button class="nav-btn" onclick="navigateTo('dashboard')">🏠 Home</button>
+          <button class="nav-btn" onclick="navigateTo('profile')">👤 Profile</button>
+          <button class="nav-btn logout" onclick="logout()">🚪 Logout</button>
+        </nav>
+      </div>
+    </header>
+
+    <div class="container">
+      <div class="notifications-container">
+        <div class="notifications-header">
+          <h1>🔔 Notifications</h1>
+          <button class="btn-secondary" onclick="clearAllNotifications()">Clear All</button>
+        </div>
+
+        <div class="notifications-list" id="notificationsList">
+          <!-- Notifications will be populated here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div id="loadingOverlay" class="loading-overlay" style="display:none;">
+    <div class="loading-spinner"></div>
+    <p>Loading...</p>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.9.0/dist/ethers.min.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

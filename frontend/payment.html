@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Data Marketplace - Payment</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <!-- ========== SCREEN 6: Payment ========== -->
+  <header class="payment-header">
+    <div class="container">
+      <a href="dataset-details.html" class="back-btn">← Back</a>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="payment-container">
+      <h2>Payment</h2>
+      
+      <div class="order-summary">
+        <h3>Order Summary</h3>
+        <div class="summary-item">
+          <span>Dataset Price</span>
+          <span id="summary-price">₹150</span>
+        </div>
+        <div class="summary-item">
+          <span>Tax (18%)</span>
+          <span id="summary-tax">₹27</span>
+        </div>
+        <div class="summary-item total">
+          <span>Total Amount</span>
+          <span id="summary-total">₹177</span>
+        </div>
+      </div>
+
+      <div class="payment-methods">
+        <h3>Select Payment Method</h3>
+        <label class="payment-option">
+          <input type="radio" name="payment" value="upi" checked />
+          <span class="method-icon">💳</span>
+          <div class="method-info">
+            <p>UPI</p>
+            <small>Google Pay, PhonePe, Paytm</small>
+          </div>
+        </label>
+        <label class="payment-option">
+          <input type="radio" name="payment" value="card" />
+          <span class="method-icon">🏦</span>
+          <div class="method-info">
+            <p>Credit/Debit Card</p>
+            <small>Visa, Mastercard, AmEx</small>
+          </div>
+        </label>
+        <label class="payment-option">
+          <input type="radio" name="payment" value="wallet" />
+          <span class="method-icon">👛</span>
+          <div class="method-info">
+            <p>Wallet</p>
+            <small>Use account balance</small>
+          </div>
+        </label>
+      </div>
+
+      <button class="btn-primary btn-large" onclick="window.location.href='processing.html'">Pay Now</button>
+    </div>
+  </div>
+
+  <script>
+    // Calculate tax and total
+    const price = parseInt(localStorage.getItem('currentPrice') || '100');
+    const tax = Math.round(price * 0.18);
+    const total = price + tax;
+
+    document.getElementById('summary-price').textContent = '₹' + price;
+    document.getElementById('summary-tax').textContent = '₹' + tax;
+    document.getElementById('summary-total').textContent = '₹' + total;
+
+    // Store total for next page
+    localStorage.setItem('orderTotal', total);
+  </script>
+</body>
+</html>

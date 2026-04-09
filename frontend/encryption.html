@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Data Marketplace - Encryption</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    .encryption-container {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      text-align: center;
+      padding: 20px;
+    }
+    .encryption-container h2 {
+      margin-top: 20px;
+      font-size: 24px;
+      color: #333;
+    }
+    .encryption-steps {
+      margin-top: 30px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      align-items: center;
+    }
+    .step {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #666;
+      font-size: 14px;
+    }
+    .step.active {
+      color: #2196F3;
+      font-weight: bold;
+    }
+    .step.completed {
+      color: #4CAF50;
+    }
+    .step-icon {
+      font-size: 18px;
+      width: 24px;
+    }
+  </style>
+</head>
+<body>
+  <!-- ========== SCREEN 10: Encryption ========== -->
+  <div class="encryption-container">
+    <div class="loader"></div>
+    <h2>Securing Your Data</h2>
+    <p style="color: #999; margin-top: 10px;">Setting up encryption and IPFS storage</p>
+    
+    <div class="encryption-steps">
+      <div class="step active" id="step1">
+        <span class="step-icon">🔐</span>
+        <span>Encrypting dataset</span>
+      </div>
+      <div class="step" id="step2">
+        <span class="step-icon">☁️</span>
+        <span>Uploading to IPFS</span>
+      </div>
+      <div class="step" id="step3">
+        <span class="step-icon">⛓️</span>
+        <span>Recording on blockchain</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let step = 1;
+    const interval = setInterval(() => {
+      document.getElementById('step' + step).classList.remove('active');
+      document.getElementById('step' + step).classList.add('completed');
+      step++;
+      if (step <= 3) {
+        document.getElementById('step' + step).classList.add('active');
+      } else {
+        clearInterval(interval);
+        // Redirect to publish page after 4 seconds
+        setTimeout(() => {
+          window.location.href = 'publish.html';
+        }, 500);
+      }
+    }, 1300);
+  </script>
+</body>
+</html>

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Data Marketplace - Dataset Details</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <!-- ========== SCREEN 5: Dataset Details ========== -->
+  <header class="detail-header">
+    <div class="container">
+      <a href="dashboard.html" class="back-btn">← Back</a>
+    </div>
+  </header>
+  
+  <div class="container">
+    <div class="detail-container">
+      <div class="detail-content">
+        <h2 id="detail-title">Dataset Title</h2>
+        
+        <div class="detail-meta">
+          <span class="seller-info">
+            👤 <span id="detail-seller">John Doe</span>
+          </span>
+          <span class="rating">
+            ⭐ <span id="detail-rating">4.5</span>/5 (<span id="detail-reviews">120</span> reviews)
+          </span>
+        </div>
+
+        <div class="sample-preview" id="detail-preview">
+          [Sample Data Preview]
+        </div>
+
+        <div class="detail-description">
+          <h3>Description</h3>
+          <p id="detail-description">Description here.</p>
+        </div>
+
+        <div class="detail-stats">
+          <div class="stat">
+            <span class="stat-label">File Size</span>
+            <span class="stat-value" id="detail-size">2.5 MB</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Format</span>
+            <span class="stat-value" id="detail-format">CSV, JSON</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Records</span>
+            <span class="stat-value" id="detail-records">10,000+</span>
+          </div>
+        </div>
+
+        <div class="detail-footer">
+          <div class="price-section">
+            <p class="label">Price</p>
+            <p class="price">₹<span id="detail-price">100</span></p>
+          </div>
+          <a href="payment.html" class="btn-primary btn-large" style="display: inline-block; text-decoration: none;">Buy & Download</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Load dataset details
+    const dataset = JSON.parse(localStorage.getItem('selectedDataset') || '{}');
+    if (dataset.id) {
+      document.getElementById('detail-title').textContent = dataset.title;
+      document.getElementById('detail-seller').textContent = dataset.seller;
+      document.getElementById('detail-rating').textContent = dataset.rating;
+      document.getElementById('detail-reviews').textContent = '100+';
+      document.getElementById('detail-description').textContent = `Comprehensive dataset: ${dataset.title}. High quality data for your analysis.`;
+      document.getElementById('detail-price').textContent = dataset.price;
+      localStorage.setItem('currentPrice', dataset.price);
+    }
+  </script>
+</body>
+</html>

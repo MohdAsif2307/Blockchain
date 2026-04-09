@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Data Marketplace - Notifications</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    .notifications-container {
+      max-width: 600px;
+      margin: 20px auto;
+      padding: 20px;
+    }
+    .notifications-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    .notifications-header h2 {
+      margin: 0;
+      font-size: 24px;
+    }
+    .clear-btn {
+      background: #f44336;
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .clear-btn:hover {
+      background: #d32f2f;
+    }
+    .notification-item {
+      background: white;
+      border: 1px solid #e0e0e0;
+      padding: 15px;
+      border-radius: 6px;
+      margin-bottom: 12px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    .notification-item.unread {
+      background: #f0f7ff;
+      border-left: 4px solid #2196F3;
+    }
+    .notification-icon {
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+    .notification-content {
+      flex: 1;
+    }
+    .notification-content h4 {
+      margin: 0 0 5px 0;
+      font-size: 14px;
+      color: #333;
+    }
+    .notification-content p {
+      margin: 0 0 8px 0;
+      color: #666;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+    .notification-time {
+      color: #999;
+      font-size: 12px;
+    }
+    .notification-action {
+      margin-top: 10px;
+    }
+    .notification-action a {
+      color: #2196F3;
+      text-decoration: none;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .notification-action a:hover {
+      text-decoration: underline;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #999;
+    }
+    .empty-state p {
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <!-- ========== SCREEN 14: Notifications ========== -->
+  <div class="container">
+    <header class="detail-header">
+      <a href="dashboard.html" class="back-btn">← Back</a>
+    </header>
+
+    <div class="notifications-container">
+      <div class="notifications-header">
+        <h2>🔔 Notifications</h2>
+        <button class="clear-btn" onclick="clearNotifications()">Clear All</button>
+      </div>
+
+      <div id="notificationsList">
+        <!-- Unread Notifications -->
+        <div class="notification-item unread">
+          <div class="notification-icon">💰</div>
+          <div class="notification-content">
+            <h4>New Sale!</h4>
+            <p>Your "Customer Purchase History" dataset was purchased by John Smith.</p>
+            <p class="notification-time">2 hours ago</p>
+            <div class="notification-action">
+              <a onclick="viewEarnings()">View Earnings →</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="notification-item unread">
+          <div class="notification-icon">✅</div>
+          <div class="notification-content">
+            <h4>Dataset Published</h4>
+            <p>Your "IoT Sensor Data" dataset has been successfully published and is now live.</p>
+            <p class="notification-time">1 day ago</p>
+            <div class="notification-action">
+              <a onclick="viewDataset()">View Dataset →</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Read Notifications -->
+        <div class="notification-item">
+          <div class="notification-icon">💳</div>
+          <div class="notification-content">
+            <h4>Payment Received</h4>
+            <p>₹1,500 has been credited to your account from dataset sales.</p>
+            <p class="notification-time">3 days ago</p>
+          </div>
+        </div>
+
+        <div class="notification-item">
+          <div class="notification-icon">📥</div>
+          <div class="notification-content">
+            <h4>Download Completed</h4>
+            <p>Your purchase of "Health Records Dataset" is ready for download.</p>
+            <p class="notification-time">1 week ago</p>
+            <div class="notification-action">
+              <a onclick="downloadDataset()">Download File →</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="notification-item">
+          <div class="notification-icon">📊</div>
+          <div class="notification-content">
+            <h4>Weekly Summary</h4>
+            <p>Check out your weekly earnings and statistics report.</p>
+            <p class="notification-time">1 week ago</p>
+            <div class="notification-action">
+              <a onclick="viewStats()">View Report →</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="notification-item">
+          <div class="notification-icon">🔐</div>
+          <div class="notification-content">
+            <h4>Security Alert</h4>
+            <p>Your account was accessed from a new device. If this wasn't you, please update your password.</p>
+            <p class="notification-time">2 weeks ago</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function clearNotifications() {
+      if (confirm('Are you sure you want to clear all notifications?')) {
+        document.getElementById('notificationsList').innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📭</div>
+            <p>No notifications yet</p>
+            <p style="font-size: 12px; color: #ccc;">You're all caught up!</p>
+          </div>
+        `;
+      }
+    }
+
+    function viewEarnings() {
+      window.location.href = 'earnings.html';
+    }
+
+    function viewDataset() {
+      alert('Redirecting to your published dataset...');
+    }
+
+    function downloadDataset() {
+      alert('Download started...');
+    }
+
+    function viewStats() {
+      alert('Opening weekly statistics report...');
+    }
+  </script>
+</body>
+</html>

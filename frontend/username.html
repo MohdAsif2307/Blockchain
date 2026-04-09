@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Data Marketplace - Profile Setup</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <!-- ========== SCREEN 3: Username Setup ========== -->
+  <div class="auth-container">
+    <div class="auth-card">
+      <a href="login.html" class="back-btn">← Back</a>
+      <h2>Set Up Your Profile</h2>
+      
+      <div class="avatar-upload">
+        <img id="avatarPreview" src="https://via.placeholder.com/100" alt="Avatar">
+        <input type="file" id="avatarInput" accept="image/*" onchange="previewAvatar(event)" />
+        <label for="avatarInput">Upload Avatar</label>
+      </div>
+      
+      <input type="text" placeholder="Username (e.g., ashish.data)" id="usernameInput" class="profile-input" />
+      
+      <a href="dashboard.html" class="btn-primary btn-block" style="display: inline-block; text-decoration: none; text-align: center;">Continue</a>
+    </div>
+  </div>
+
+  <script>
+    function previewAvatar(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          document.getElementById('avatarPreview').src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+  </script>
+</body>
+</html>

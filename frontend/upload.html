@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Data Marketplace - Upload Dataset</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    .upload-container {
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 20px;
+    }
+    .upload-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .upload-header h2 {
+      font-size: 28px;
+      margin-bottom: 10px;
+    }
+    .upload-header p {
+      color: #666;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #333;
+    }
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 14px;
+    }
+    .form-group textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+    .file-upload {
+      border: 2px dashed #4CAF50;
+      padding: 30px;
+      text-align: center;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .file-upload:hover {
+      background: #f0f8f5;
+    }
+    .file-upload input[type="file"] {
+      display: none;
+    }
+    .upload-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 30px;
+    }
+    .upload-actions button {
+      flex: 1;
+    }
+  </style>
+</head>
+<body>
+  <!-- ========== SCREEN 9: Upload Dataset ========== -->
+  <div class="container">
+    <header class="detail-header" style="margin-bottom: 20px;">
+      <a href="dashboard.html" class="back-btn">← Back</a>
+    </header>
+
+    <div class="upload-container">
+      <div class="upload-header">
+        <h2>Sell Your Data</h2>
+        <p>Share your valuable dataset with the community</p>
+      </div>
+
+      <form id="uploadForm">
+        <div class="form-group">
+          <label for="file">📁 Upload File</label>
+          <div class="file-upload" onclick="document.getElementById('fileInput').click();">
+            <p>Click to select file or drag & drop</p>
+            <input type="file" id="fileInput" />
+          </div>
+          <p id="fileName" style="color: #666; margin-top: 10px; font-size: 12px;"></p>
+        </div>
+
+        <div class="form-group">
+          <label for="title">📋 Dataset Title</label>
+          <input type="text" id="title" placeholder="e.g., Customer Purchase History" required />
+        </div>
+
+        <div class="form-group">
+          <label for="description">📝 Description</label>
+          <textarea id="description" placeholder="Describe your dataset..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="price">💰 Price (₹)</label>
+          <input type="number" id="price" placeholder="100" min="50" max="50000" required />
+        </div>
+
+        <div class="form-group">
+          <label for="category">📂 Category</label>
+          <select id="category" required>
+            <option>Finance</option>
+            <option>Healthcare</option>
+            <option>Retail</option>
+            <option>IoT</option>
+            <option>Weather</option>
+            <option>Other</option>
+          </select>
+        </div>
+
+        <div class="upload-actions">
+          <a href="dashboard.html" class="btn-secondary">Cancel</a>
+          <button type="button" class="btn-primary" onclick="submitUpload()">Submit</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('fileInput').addEventListener('change', function(e) {
+      const filename = e.target.files[0]?.name || 'No file selected';
+      document.getElementById('fileName').textContent = '✓ ' + filename;
+    });
+
+    function submitUpload() {
+      const title = document.getElementById('title').value;
+      const price = document.getElementById('price').value;
+      const file = document.getElementById('fileInput').files[0];
+
+      if (!title || !price || !file) {
+        alert('Please fill all required fields');
+        return;
+      }
+
+      const uploadData = {
+        title,
+        price,
+        filename: file.name,
+        filesize: (file.size / 1024 / 1024).toFixed(2) + ' MB'
+      };
+
+      localStorage.setItem('uploadData', JSON.stringify(uploadData));
+      window.location.href = 'encryption.html';
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Data Marketplace - Publish Dataset</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    .publish-container {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      text-align: center;
+      padding: 20px;
+    }
+    .celebrate-icon {
+      font-size: 80px;
+      margin-bottom: 20px;
+      animation: bounce 0.6s ease;
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-30px) rotate(5deg); }
+    }
+    .publish-container h2 {
+      font-size: 28px;
+      color: #4CAF50;
+      margin-bottom: 10px;
+    }
+    .publish-container p {
+      color: #666;
+      margin-bottom: 30px;
+    }
+    .dataset-info {
+      background: #f5f5f5;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+      max-width: 500px;
+    }
+    .dataset-info div {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    .dataset-info div:last-child {
+      border-bottom: none;
+    }
+    .share-link {
+      background: white;
+      border: 1px solid #ddd;
+      padding: 12px;
+      border-radius: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      font-size: 12px;
+    }
+    .copy-btn {
+      background: #2196F3;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .copy-btn:hover {
+      background: #0b7dda;
+    }
+    .publish-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+  </style>
+</head>
+<body>
+  <!-- ========== SCREEN 11: Publish Confirmation ========== -->
+  <div class="publish-container">
+    <div class="celebrate-icon">🎉</div>
+    <h2>Dataset Published!</h2>
+    <p>Your dataset is now live and available for purchase</p>
+
+    <div class="dataset-info">
+      <div>
+        <strong>Dataset</strong>
+        <span id="pub-title">Your Dataset</span>
+      </div>
+      <div>
+        <strong>Price</strong>
+        <span id="pub-price">₹100</span>
+      </div>
+      <div>
+        <strong>Status</strong>
+        <span style="color: #4CAF50;">✓ Live</span>
+      </div>
+    </div>
+
+    <div style="margin-bottom: 20px; width: 100%; max-width: 500px;">
+      <p style="color: #666; font-size: 12px; margin-bottom: 8px;">Share Dataset Link:</p>
+      <div class="share-link">
+        <span id="shareLink">marketplace.example.com/dataset/12345</span>
+        <button class="copy-btn" onclick="copyLink()">📋 Copy</button>
+      </div>
+    </div>
+
+    <div class="publish-actions">
+      <button class="btn-primary" onclick="window.location.href='dashboard.html'">📊 Back to Dashboard</button>
+      <button class="btn-secondary" onclick="window.location.href='upload.html'">📤 Upload Another</button>
+    </div>
+  </div>
+
+  <script>
+    const uploadData = JSON.parse(localStorage.getItem('uploadData') || '{}');
+    if (uploadData.title) {
+      document.getElementById('pub-title').textContent = uploadData.title;
+      document.getElementById('pub-price').textContent = '₹' + uploadData.price;
+    }
+
+    // Generate a sample dataset ID
+    const datasetId = Math.floor(Math.random() * 100000);
+    document.getElementById('shareLink').textContent = 'marketplace.example.com/dataset/' + datasetId;
+
+    function copyLink() {
+      const link = document.getElementById('shareLink').textContent;
+      navigator.clipboard.writeText(link);
+      alert('Link copied to clipboard!');
+    }
+  </script>
+</body>
+</html>

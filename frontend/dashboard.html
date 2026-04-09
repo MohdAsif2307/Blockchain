@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Data Marketplace - Dashboard</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <!-- ========== SCREEN 4: Home Dashboard ========== -->
+  <header class="dashboard-header">
+    <div class="container">
+      <div class="logo">📊 Data Marketplace</div>
+      <nav class="dashboard-nav">
+        <a href="dashboard.html" class="nav-btn active">🏠 Home</a>
+        <a href="upload.html" class="nav-btn">📤 Sell Data</a>
+        <a href="profile.html" class="nav-btn">👤 Profile</a>
+        <a href="notifications.html" class="nav-btn">🔔 Notifications</a>
+        <a href="landing.html" class="nav-btn logout">🚪 Logout</a>
+      </nav>
+    </div>
+  </header>
+  
+  <main class="container">
+    <!-- Welcome Section -->
+    <div class="welcome-section">
+      <h1>Welcome, User! 👋</h1>
+      <p>Discover datasets and earn money by selling your data</p>
+    </div>
+
+    <!-- Search & Filters -->
+    <div class="search-section">
+      <input type="text" placeholder="🔍 Search datasets..." class="search-bar" id="searchInput" />
+    </div>
+
+    <!-- Categories -->
+    <div class="categories-section">
+      <h3>Categories</h3>
+      <div class="categories">
+        <button class="category">🤖 AI Data</button>
+        <button class="category">⚕️ Health</button>
+        <button class="category">📡 IoT</button>
+        <button class="category">All</button>
+      </div>
+    </div>
+
+    <!-- Recommended Datasets -->
+    <section class="recommended-section">
+      <h2>📊 Recommended Datasets</h2>
+      <div class="dataset-grid" id="datasetList">
+        <!-- Dataset cards will populate here -->
+      </div>
+    </section>
+
+    <!-- Your Earnings Preview -->
+    <section class="earnings-preview">
+      <div class="earnings-card">
+        <h3>Your Earnings</h3>
+        <p class="earnings-amount">₹<span id="totalEarnings">500</span></p>
+        <a href="earnings.html" class="btn-secondary" style="display: inline-block; text-decoration: none;">View Details →</a>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // Mock data
+    const datasets = [
+      { id: 1, title: "Customer Behavior Analytics", price: 150, category: "AI Data", seller: "Pro Seller", rating: 4.8, icon: "📊" },
+      { id: 2, title: "Health Records Dataset", price: 200, category: "Health", seller: "Medical Inc", rating: 4.9, icon: "⚕️" },
+      { id: 3, title: "IoT Sensor Data", price: 120, category: "IoT", seller: "Smart Systems", rating: 4.6, icon: "📡" },
+      { id: 4, title: "E-Commerce Transaction Log", price: 180, category: "AI Data", seller: "Commerce", rating: 4.7, icon: "🛍️" },
+      { id: 5, title: "Climate & Weather Data", price: 100, category: "IoT", seller: "Weather Experts", rating: 4.5, icon: "🌤️" },
+      { id: 6, title: "Patient Medical Records", price: 250, category: "Health", seller: "Healthcare", rating: 4.9, icon: "🏥" }
+    ];
+
+    function renderDatasets() {
+      const datasetList = document.getElementById('datasetList');
+      datasetList.innerHTML = datasets.map(dataset => `
+        <div class="dataset-card" onclick="goToDataset(${dataset.id})">
+          <div class="dataset-card-image">${dataset.icon}</div>
+          <div class="dataset-card-content">
+            <h3>${dataset.title}</h3>
+            <p><strong>Category:</strong> ${dataset.category}</p>
+            <p><strong>Seller:</strong> ${dataset.seller}</p>
+            <div class="dataset-card-footer">
+              <span class="price">₹${dataset.price}</span>
+              <span class="rating">⭐ ${dataset.rating}</span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function goToDataset(id) {
+      localStorage.setItem('selectedDataset', JSON.stringify(datasets.find(d => d.id === id)));
+      window.location.href = 'dataset-details.html';
+    }
+
+    renderDatasets();
+  </script>
+</body>
+</html>

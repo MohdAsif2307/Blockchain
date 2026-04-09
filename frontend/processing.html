@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Data Marketplace - Processing</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    .processing-container {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      text-align: center;
+      padding: 20px;
+    }
+    .processing-container h2 {
+      margin-top: 20px;
+      font-size: 24px;
+      color: #333;
+    }
+    .processing-steps {
+      margin-top: 30px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      align-items: center;
+    }
+    .step {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #666;
+      font-size: 14px;
+    }
+    .step.active {
+      color: #4CAF50;
+      font-weight: bold;
+    }
+    .step-icon {
+      font-size: 18px;
+      width: 24px;
+    }
+  </style>
+</head>
+<body>
+  <!-- ========== SCREEN 7: Processing ========== -->
+  <div class="processing-container">
+    <div class="loader"></div>
+    <h2>Processing Payment</h2>
+    <p style="color: #999; margin-top: 10px;">Please do not close this window</p>
+    
+    <div class="processing-steps">
+      <div class="step active" id="step1">
+        <span class="step-icon">⏳</span>
+        <span>Verifying payment details</span>
+      </div>
+      <div class="step" id="step2">
+        <span class="step-icon">🔐</span>
+        <span>Processing transaction</span>
+      </div>
+      <div class="step" id="step3">
+        <span class="step-icon">✓</span>
+        <span>Completing purchase</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let step = 1;
+    const interval = setInterval(() => {
+      document.getElementById('step' + step).classList.remove('active');
+      step++;
+      if (step <= 3) {
+        document.getElementById('step' + step).classList.add('active');
+      } else {
+        clearInterval(interval);
+        // Redirect to download page after 3 seconds
+        setTimeout(() => {
+          window.location.href = 'download.html';
+        }, 500);
+      }
+    }, 1000);
+  </script>
+</body>
+</html>

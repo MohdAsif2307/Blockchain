@@ -77,6 +77,12 @@
 
           <button class="btn-primary btn-block" onclick="handleLogin()">Login</button>
 
+          <div class="auth-divider">or continue with</div>
+
+          <button class="btn-metamask" id="loginMetaMaskBtn" onclick="handleMetaMaskLogin()">
+            🦊 Connect with MetaMask
+          </button>
+
           <p class="disclaimer">
             Don't have an account? <a href="javascript:navigateTo('signup')">Sign up now</a>
           </p>
@@ -126,6 +132,12 @@
 
           <button class="btn-primary btn-block" onclick="handleSignup()">Sign Up</button>
 
+          <div class="auth-divider">or continue with</div>
+
+          <button class="btn-metamask" id="signupMetaMaskBtn" onclick="handleMetaMaskLogin()">
+            🦊 Connect with MetaMask
+          </button>
+
           <p class="disclaimer">
             Already have an account? <a href="javascript:navigateTo('login')">Login here</a>
           </p>
@@ -145,6 +157,10 @@
           Data Marketplace
         </div>
         <nav class="dashboard-nav">
+          <div class="wallet-status disconnected" id="walletStatusBadge" onclick="connectMetaMaskManual()" title="Click to connect MetaMask">
+            <span class="status-dot"></span>
+            <span class="wallet-address-text" id="walletAddressDisplay">🦊 Connect Wallet</span>
+          </div>
           <button class="nav-btn active" onclick="navigateTo('dashboard')">🏠 Home</button>
           <button class="nav-btn" onclick="navigateTo('upload')">📤 Sell Data</button>
           <button class="nav-btn" onclick="navigateTo('profile')">👤 Profile</button>
@@ -287,7 +303,11 @@
             <h3>Select Payment Method</h3>
             <div class="methods">
               <label class="payment-option">
-                <input type="radio" name="payment" value="upi" checked />
+                <input type="radio" name="payment" value="metamask" checked />
+                <span>🦊 MetaMask (ETH) <span id="metamaskPaymentAddr" style="font-size:11px;opacity:0.7"></span></span>
+              </label>
+              <label class="payment-option">
+                <input type="radio" name="payment" value="upi" />
                 <span>💳 UPI / Phone Pay</span>
               </label>
               <label class="payment-option">

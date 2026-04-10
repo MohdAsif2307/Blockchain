@@ -280,7 +280,8 @@
       }
 
       // Execute blockchain transaction for all methods
-      const priceWei = ethers.parseUnits(dataset.price.toString(), "gwei");
+      await initializeContract();
+      const priceWei = ethers.parseUnits(dataset.price.toString(), "ether");
       await buyDataset(dataset.blockchainId || 0, priceWei);
       console.log('Blockchain transaction completed for', method);
 
@@ -306,6 +307,11 @@
     import { initializeContract, buyDataset } from "./js/contract.js";
     import { initiatePurchase, completePurchase } from "./js/api.js";
 
+    window.ethers = ethers;
+    window.initializeContract = initializeContract;
+    window.buyDataset = buyDataset;
+    window.initiatePurchase = initiatePurchase;
+    window.completePurchase = completePurchase;
     window.processPayment = processPayment;
   </script>
   </script>

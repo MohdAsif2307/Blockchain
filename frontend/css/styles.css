@@ -1847,3 +1847,138 @@ body {
     padding: 14px;
   }
 }
+
+/* ========== METAMASK INTEGRATION ========== */
+.btn-metamask {
+  width: 100%;
+  padding: 16px;
+  border: 2px solid #e2761b;
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin: 14px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: linear-gradient(135deg, #f6851b, #e2761b);
+  color: white;
+  box-shadow: 0 4px 14px rgba(226, 118, 27, 0.25);
+}
+
+.btn-metamask:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(226, 118, 27, 0.35);
+  background: linear-gradient(135deg, #e2761b, #cd6116);
+}
+
+.btn-metamask:active {
+  transform: translateY(0);
+}
+
+.btn-metamask .metamask-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.btn-metamask:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  margin: 20px 0;
+  gap: 12px;
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #e2e8f0;
+}
+
+/* Wallet Status Badge in Dashboard Header */
+.wallet-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.wallet-status.connected {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.05));
+  color: #059669;
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+.wallet-status.disconnected {
+  background: linear-gradient(135deg, rgba(226, 118, 27, 0.1), rgba(226, 118, 27, 0.05));
+  color: #e2761b;
+  border-color: rgba(226, 118, 27, 0.2);
+}
+
+.wallet-status .status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  animation: pulse-dot 2s infinite;
+}
+
+.wallet-status.connected .status-dot {
+  background: #10b981;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.5);
+}
+
+.wallet-status.disconnected .status-dot {
+  background: #f59e0b;
+  box-shadow: 0 0 6px rgba(245, 158, 11, 0.5);
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.wallet-address-text {
+  font-family: 'Courier New', monospace;
+  letter-spacing: 0.5px;
+}
+
+.wallet-status:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+/* MetaMask info box on payment page */
+.metamask-payment-info {
+  background: linear-gradient(135deg, rgba(226, 118, 27, 0.08), rgba(226, 118, 27, 0.03));
+  border: 1px solid rgba(226, 118, 27, 0.2);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin: 12px 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  color: #92400e;
+}
+
+.metamask-payment-info .fox-emoji {
+  font-size: 24px;
+}

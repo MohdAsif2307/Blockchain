@@ -78,6 +78,7 @@ async function connectWallet() {
     try {
       const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
       if (accounts && accounts.length) {
+        const oldWallet = appState.currentUser?.walletAddress;
         appState.currentAccount = accounts[0];
         if (!appState.currentUser) {
           appState.currentUser = { walletAddress: accounts[0] };
@@ -85,26 +86,57 @@ async function connectWallet() {
           appState.currentUser.walletAddress = accounts[0];
         }
         localStorage.setItem("walletAddress", accounts[0]);
+
+        // Sync MetaMask wallet address to backend if it changed
+        if (oldWallet && oldWallet !== accounts[0] && appState.currentUser.username) {
+          try {
+            console.log("🔄 Syncing MetaMask wallet address to backend...");
+            await updateProfile(
+              oldWallet,
+              appState.currentUser.username,
+              appState.currentUser.email || "",
+              appState.currentUser.avatar || ""
+            );
+            // Now update the backend with the new wallet address
+            await fetch(`/api/users/${appState.currentUser.id}/wallet`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ walletAddress: accounts[0] })
+            });
+            console.log("✅ Wallet address synced to backend");
+          } catch (syncErr) {
+            console.warn("⚠️ Wallet sync failed, will use DB address:", syncErr.message);
+            // Revert to old wallet so API calls work with existing DB record
+            appState.currentUser.walletAddress = oldWallet;
+            appState.currentAccount = oldWallet;
+          }
+        }
       }
       if (!window.contract) {
-        initializeContract();
+        await initializeContract();
       }
     } catch (err) {
       console.warn("Wallet connect failed", err);
     }
   } else {
-    const fallback = localStorage.getItem("walletAddress");
-    if (fallback) {
-      appState.currentAccount = fallback;
-      if (appState.currentUser) {
-        appState.currentUser.walletAddress = fallback;
-      }
+    // No MetaMask - use the wallet address from the backend user record
+    if (appState.currentUser && appState.currentUser.walletAddress) {
+      appState.currentAccount = appState.currentUser.walletAddress;
+      localStorage.setItem("walletAddress", appState.currentUser.walletAddress);
     } else {
-      const generated = `0x${Math.random().toString(16).slice(2, 42).padEnd(40, "0")}`;
-      appState.currentAccount = generated;
-      localStorage.setItem("walletAddress", generated);
-      if (!appState.currentUser) {
-        appState.currentUser = { walletAddress: generated };
+      const fallback = localStorage.getItem("walletAddress");
+      if (fallback) {
+        appState.currentAccount = fallback;
+        if (appState.currentUser) {
+          appState.currentUser.walletAddress = fallback;
+        }
+      } else {
+        const generated = `0x${Math.random().toString(16).slice(2, 42).padEnd(40, "0")}`;
+        appState.currentAccount = generated;
+        localStorage.setItem("walletAddress", generated);
+        if (!appState.currentUser) {
+          appState.currentUser = { walletAddress: generated };
+        }
       }
     }
   }
@@ -114,9 +146,187 @@ function getCurrentWalletAddress() {
   return appState.currentUser?.walletAddress || appState.currentAccount;
 }
 
-function loginProvider(method) {
-  navigateTo("username");
+// ==================== METAMASK UI & NETWORK ====================
+
+function truncateAddress(addr) {
+  if (!addr) return "";
+  return addr.slice(0, 6) + "..." + addr.slice(-4);
 }
+
+function updateWalletUI() {
+  const badge = document.getElementById("walletStatusBadge");
+  const addrDisplay = document.getElementById("walletAddressDisplay");
+  const metamaskPaymentAddr = document.getElementById("metamaskPaymentAddr");
+
+  if (window.ethereum && appState.currentAccount) {
+    if (badge) {
+      badge.classList.remove("disconnected");
+      badge.classList.add("connected");
+      badge.title = appState.currentAccount;
+    }
+    if (addrDisplay) {
+      addrDisplay.textContent = "🦊 " + truncateAddress(appState.currentAccount);
+    }
+    if (metamaskPaymentAddr) {
+      metamaskPaymentAddr.textContent = "(" + truncateAddress(appState.currentAccount) + ")";
+    }
+  } else {
+    if (badge) {
+      badge.classList.remove("connected");
+      badge.classList.add("disconnected");
+    }
+    if (addrDisplay) {
+      addrDisplay.textContent = "🦊 Connect Wallet";
+    }
+    if (metamaskPaymentAddr) {
+      metamaskPaymentAddr.textContent = "";
+    }
+  }
+}
+
+async function ensureHardhatNetwork() {
+  if (!window.ethereum) return;
+  
+  const chainIdHex = "0x" + (31337).toString(16); // 0x7a69
+  try {
+    await window.ethereum.request({
+      method: "wallet_switchEthereumChain",
+      params: [{ chainId: chainIdHex }]
+    });
+    console.log("✅ Switched to Hardhat network");
+  } catch (switchErr) {
+    // Chain not added yet — add it
+    if (switchErr.code === 4902) {
+      try {
+        await window.ethereum.request({
+          method: "wallet_addEthereumChain",
+          params: [{
+            chainId: chainIdHex,
+            chainName: "Hardhat Local",
+            rpcUrls: ["http://127.0.0.1:8545"],
+            nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 }
+          }]
+        });
+        console.log("✅ Hardhat network added to MetaMask");
+      } catch (addErr) {
+        console.error("❌ Failed to add Hardhat network:", addErr);
+      }
+    } else {
+      console.warn("⚠️ Network switch failed:", switchErr.message);
+    }
+  }
+}
+
+async function handleMetaMaskLogin() {
+  if (!window.ethereum) {
+    alert("❌ MetaMask is not installed. Please install MetaMask extension and try again.");
+    return;
+  }
+
+  try {
+    showLoading(true);
+    console.log("🦊 MetaMask login starting...");
+
+    // Switch to Hardhat network first
+    await ensureHardhatNetwork();
+
+    // Request accounts
+    const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+    if (!accounts || !accounts.length) {
+      alert("❌ No MetaMask accounts found. Please unlock MetaMask.");
+      return;
+    }
+
+    const walletAddress = accounts[0];
+    console.log("🦊 MetaMask connected:", walletAddress);
+    appState.currentAccount = walletAddress;
+
+    // Try to find existing user by wallet
+    try {
+      const profileResp = await fetch(`/api/profile?walletAddress=${encodeURIComponent(walletAddress)}`);
+      if (profileResp.ok) {
+        const profileData = await profileResp.json();
+        appState.currentUser = profileData.user;
+        console.log("✅ Existing user found:", appState.currentUser.username);
+      } else {
+        // No user — auto-register with MetaMask wallet
+        const username = "user_" + walletAddress.slice(2, 8);
+        const result = await signupUser(username, username + "@metamask.local", "metamask_" + walletAddress.slice(0, 10));
+        appState.currentUser = result.user;
+        // Update wallet address in backend
+        await fetch(`/api/users/${appState.currentUser.id}/wallet`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ walletAddress })
+        });
+        appState.currentUser.walletAddress = walletAddress;
+        console.log("✅ New MetaMask user created:", username);
+      }
+    } catch (err) {
+      console.error("User lookup/create failed:", err);
+      appState.currentUser = { walletAddress, username: truncateAddress(walletAddress) };
+    }
+
+    saveCurrentUser();
+    await initializeContract();
+    updateWalletUI();
+
+    console.log("📊 Loading datasets...");
+    await loadDatasets();
+
+    alert("✅ MetaMask connected!\nWallet: " + truncateAddress(walletAddress));
+    navigateTo("dashboard");
+  } catch (error) {
+    console.error("❌ MetaMask login error:", error);
+    if (error.code === 4001) {
+      alert("❌ MetaMask connection was rejected. Please approve the connection.");
+    } else {
+      alert("❌ MetaMask login failed:\n" + (error.message || error.toString()));
+    }
+  } finally {
+    showLoading(false);
+  }
+}
+
+async function connectMetaMaskManual() {
+  if (!window.ethereum) {
+    alert("❌ MetaMask is not installed.\n\nPlease install MetaMask browser extension from https://metamask.io");
+    return;
+  }
+
+  try {
+    await ensureHardhatNetwork();
+    const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+    if (accounts && accounts.length) {
+      appState.currentAccount = accounts[0];
+      if (appState.currentUser) {
+        const oldWallet = appState.currentUser.walletAddress;
+        appState.currentUser.walletAddress = accounts[0];
+        // Sync to backend
+        if (appState.currentUser.id && oldWallet !== accounts[0]) {
+          await fetch(`/api/users/${appState.currentUser.id}/wallet`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ walletAddress: accounts[0] })
+          });
+        }
+        saveCurrentUser();
+      }
+      localStorage.setItem("walletAddress", accounts[0]);
+      await initializeContract();
+      updateWalletUI();
+      alert("✅ MetaMask connected!\nWallet: " + truncateAddress(accounts[0]));
+    }
+  } catch (err) {
+    if (err.code === 4001) {
+      alert("MetaMask connection rejected.");
+    } else {
+      console.error("MetaMask connect error:", err);
+      alert("Failed to connect MetaMask: " + err.message);
+    }
+  }
+}
+
 
 async function handleLogin() {
   const email = document.getElementById("loginEmail").value.trim();
@@ -135,6 +345,9 @@ async function handleLogin() {
     console.log("✅ Login successful");
     
     appState.currentUser = result.user;
+    
+    await connectWallet();
+    
     saveCurrentUser();
     console.log("💾 User saved to localStorage");
     
@@ -203,6 +416,9 @@ async function handleSignup() {
     if (!appState.currentUser.walletBalance) {
       appState.currentUser.walletBalance = 5000; // Initial wallet balance for new users
     }
+    
+    await connectWallet();
+    
     saveCurrentUser();
     console.log("💾 User saved to localStorage");
     
@@ -397,41 +613,61 @@ async function handlePurchase() {
     return;
   }
 
+  const paymentMethod = appState.selectedPaymentMethod || "metamask";
+
   try {
     showLoading(true);
-    console.log('Processing payment via:', appState.selectedPaymentMethod || 'default');
+    console.log("Processing payment via:", paymentMethod);
 
     const purchase = await initiatePurchase(appState.currentDataset.id, appState.currentUser.walletAddress);
 
     // Only attempt blockchain purchase if dataset has blockchain ID
     const blockchainId = appState.currentDataset.blockchainId;
     if (blockchainId && blockchainId > 0) {
-      if (!window.contract) initializeContract();
-      const priceValue = appState.currentDataset.price || 0;
-      const priceWei = ethers.parseUnits(String(priceValue), "ether");
-      await buyDataset(blockchainId, priceWei);
-      console.log('Blockchain transaction completed via', appState.selectedPaymentMethod || 'blockchain');
+      // MetaMask payment — use MetaMask signer
+      if (paymentMethod === "metamask" && window.ethereum) {
+        console.log("🦊 Processing via MetaMask...");
+        await ensureHardhatNetwork();
+        if (!window.contract) await initializeContract();
+        const priceValue = appState.currentDataset.price || 0;
+        const priceWei = ethers.parseUnits(String(priceValue), "ether");
+        console.log("🦊 MetaMask will prompt for transaction approval...");
+        await buyDataset(blockchainId, priceWei);
+        console.log("✅ MetaMask transaction confirmed!");
+      } else {
+        // Fallback: use Hardhat signer for non-MetaMask payments
+        if (!window.contract) await initializeContract();
+        const priceValue = appState.currentDataset.price || 0;
+        const priceWei = ethers.parseUnits(String(priceValue), "ether");
+        await buyDataset(blockchainId, priceWei);
+        console.log("✅ Blockchain transaction completed via", paymentMethod);
+      }
 
       // If wallet payment was selected, deduct from wallet balance
-      if (appState.selectedPaymentMethod === 'wallet') {
+      if (paymentMethod === "wallet") {
         const totalAmount = appState.currentDataset.price + Math.round(appState.currentDataset.price * 0.18);
         appState.currentUser.walletBalance = (appState.currentUser.walletBalance || 0) - totalAmount;
         saveCurrentUser();
-        console.log('Wallet balance deducted. New balance:', appState.currentUser.walletBalance);
+        console.log("Wallet balance deducted. New balance:", appState.currentUser.walletBalance);
       }
     } else {
       console.warn("Skipping blockchain purchase - dataset not registered on blockchain");
     }
 
     await completePurchase(purchase.purchaseId);
-    alert("Purchase completed successfully.");
+    alert("✅ Purchase completed successfully!");
     await loadDatasets();
     navigateTo("download");
   } catch (error) {
     console.error(error);
-    alert(error.message || "Purchase failed.");
+    if (error.code === "ACTION_REJECTED" || error.code === 4001) {
+      alert("❌ Transaction rejected in MetaMask.\nPlease approve the transaction to complete your purchase.");
+    } else {
+      alert(error.message || "Purchase failed.");
+    }
   } finally {
     showLoading(false);
+
   }
 }
 
@@ -472,6 +708,17 @@ function validatePaymentMethod(method) {
   const currentUser = appState.currentUser || JSON.parse(localStorage.getItem('dataMarketplaceUser') || '{}');
 
   switch (method) {
+    case 'metamask':
+      if (!window.ethereum) {
+        alert('❌ MetaMask is not installed. Please install MetaMask extension or choose another payment method.');
+        return false;
+      }
+      if (!appState.currentAccount) {
+        alert('❌ MetaMask is not connected. Please connect your wallet first.');
+        return false;
+      }
+      return true;
+
     case 'card':
       const cardNumber = document.getElementById('cardNumber')?.value?.trim();
       const cardExpiry = document.getElementById('cardExpiry')?.value?.trim();
@@ -579,7 +826,7 @@ async function uploadDataset() {
     console.log("⛓️ Registering on blockchain...");
     if (!window.contract) {
       console.log("Init contract");
-      initializeContract();
+      await initializeContract();
     }
     const hashStr = typeof fileHash === 'object' ? fileHash.hash : fileHash;
     const priceWei = ethers.parseUnits(String(price), "ether");
@@ -859,6 +1106,10 @@ function clearAllNotifications() {
   loadNotifications();
 }
 
+function loginProvider(method) {
+  navigateTo("username");
+}
+
 function loginWithGoogle() {
   loginProvider("Google");
 }
@@ -870,6 +1121,8 @@ function loginWithEmail() {
 window.navigateTo = navigateTo;
 window.handleLogin = handleLogin;
 window.handleSignup = handleSignup;
+window.handleMetaMaskLogin = handleMetaMaskLogin;
+window.connectMetaMaskManual = connectMetaMaskManual;
 window.loginWithGoogle = loginWithGoogle;
 window.loginWithEmail = loginWithEmail;
 window.completeUsername = completeUsername;
@@ -905,6 +1158,7 @@ window.updateFileLabel = updateFileLabel;
 window.addEventListener("load", async () => {
   loadSavedUser();
   await connectWallet();
+  updateWalletUI();
   if (appState.currentUser) {
     await loadDatasets();
     navigateTo("dashboard");
@@ -918,10 +1172,35 @@ if (window.ethereum) {
     if (accounts.length) {
       appState.currentAccount = accounts[0];
       if (appState.currentUser) {
+        const oldWallet = appState.currentUser.walletAddress;
         appState.currentUser.walletAddress = accounts[0];
+        // Sync new wallet to backend
+        if (appState.currentUser.id && oldWallet !== accounts[0]) {
+          try {
+            await fetch(`/api/users/${appState.currentUser.id}/wallet`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ walletAddress: accounts[0] })
+            });
+            console.log("✅ Wallet synced after account switch");
+          } catch (e) {
+            console.warn("Wallet sync failed on account change:", e);
+          }
+        }
         saveCurrentUser();
       }
+      updateWalletUI();
+      await initializeContract();
       await loadDatasets();
+    } else {
+      // Disconnected
+      appState.currentAccount = null;
+      updateWalletUI();
     }
+  });
+
+  window.ethereum.on("chainChanged", () => {
+    console.log("🔄 Chain changed, reloading...");
+    window.location.reload();
   });
 }

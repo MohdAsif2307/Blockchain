@@ -99,18 +99,25 @@ let provider;
 let signer;
 let contract;
 
-export function initializeContract() {
+export async function initializeContract() {
   try {
-    console.log("🔌 Connecting to RPC: http://127.0.0.1:8545");
-    provider = new ethers.JsonRpcProvider("http://127.0.0.1:8545");
-    console.log("✅ Provider connected");
-    
-    console.log("🔑 Setting up signer");
-    signer = new ethers.Wallet("0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80", provider);
-    console.log("✅ Signer ready:", signer.address);
+    if (window.ethereum) {
+      console.log("🔌 Connecting to MetaMask...");
+      provider = new ethers.BrowserProvider(window.ethereum);
+      signer = await provider.getSigner();
+      console.log("✅ Provider connected & Signer ready:", signer.address);
+    } else {
+      console.log("🔌 Connecting to RPC: http://127.0.0.1:8545");
+      provider = new ethers.JsonRpcProvider("http://127.0.0.1:8545");
+      console.log("✅ Provider connected");
+      console.log("🔑 Setting up signer");
+      signer = new ethers.Wallet("0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80", provider);
+      console.log("✅ Signer ready:", signer.address);
+    }
     
     console.log("📄 Contract address:", contractAddress);
     contract = new ethers.Contract(contractAddress, contractABI, signer);
+    window.contract = contract;
     console.log("✅ Contract initialized");
     return contract;
   } catch (err) {
@@ -170,9 +177,16 @@ export async function registerDataset(title, description, ipfsHash, priceWei) {
 }
 
 export async function buyDataset(id, priceWei) {
-  // Use account 1 for buying to avoid seller == buyer
-  const buyerSigner = new ethers.Wallet("0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d", provider); // Hardhat account 1
-  const buyerContract = new ethers.Contract(contractAddress, contractABI, buyerSigner);
-  const tx = await buyerContract.buyData(id, { value: priceWei, gasLimit: 2000000 });
-  return await tx.wait();
+  if (window.ethereum) {
+    const userSigner = await provider.getSigner();
+    const connectedContract = contract.connect(userSigner);
+    const tx = await connectedContract.buyData(id, { value: priceWei, gasLimit: 2000000 });
+    return await tx.wait();
+  } else {
+    // Use account 1 for buying to avoid seller == buyer
+    const buyerSigner = new ethers.Wallet("0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d", provider); // Hardhat account 1
+    const buyerContract = new ethers.Contract(contractAddress, contractABI, buyerSigner);
+    const tx = await buyerContract.buyData(id, { value: priceWei, gasLimit: 2000000 });
+    return await tx.wait();
+  }
 }

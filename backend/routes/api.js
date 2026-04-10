@@ -808,4 +808,26 @@ router.get("/notifications", async (req, res) => {
   }
 });
 
+// Update user wallet address (for MetaMask sync)
+router.post("/users/:id/wallet", async (req, res) => {
+  try {
+    const { walletAddress } = req.body;
+    if (!walletAddress) {
+      return res.status(400).json({ error: "walletAddress is required" });
+    }
+
+    const user = await db.get(`SELECT * FROM users WHERE id = ?`, [req.params.id]);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    await db.run(`UPDATE users SET walletAddress = ? WHERE id = ?`, [walletAddress, user.id]);
+    console.log(`✅ Wallet updated for user ${user.id}: ${walletAddress}`);
+    res.json({ success: true, walletAddress });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;

@@ -155,6 +155,51 @@ router.get("/profile", async (req, res) => {
   }
 });
 
+// Update current user profile
+router.post("/profile/update", async (req, res) => {
+  try {
+    const { walletAddress, username, email, avatar } = req.body;
+    if (!walletAddress) {
+      return res.status(400).json({ error: "walletAddress is required" });
+    }
+    if (!username || !email) {
+      return res.status(400).json({ error: "Username and email are required" });
+    }
+
+    const user = await db.get(`SELECT * FROM users WHERE walletAddress = ?`, [walletAddress]);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const existingUsername = await db.get(`SELECT id FROM users WHERE username = ? AND id != ?`, [username, user.id]);
+    if (existingUsername) {
+      return res.status(409).json({ error: "Username is already taken" });
+    }
+
+    const existingEmail = await db.get(`SELECT id FROM users WHERE email = ? AND id != ?`, [email, user.id]);
+    if (existingEmail) {
+      return res.status(409).json({ error: "Email is already in use" });
+    }
+
+    const updateFields = [username, email];
+    let updateQuery = `UPDATE users SET username = ?, email = ?`;
+    if (avatar) {
+      updateQuery += `, avatar = ?`;
+      updateFields.push(avatar);
+    }
+    updateQuery += ` WHERE id = ?`;
+    updateFields.push(user.id);
+
+    await db.run(updateQuery, updateFields);
+    const updatedUser = await db.get(`SELECT id, username, email, walletAddress, avatar, rating, totalEarnings, totalPurchased, reviewCount, createdAt FROM users WHERE id = ?`, [user.id]);
+
+    res.json({ success: true, user: updatedUser });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // ==================== DATASET ENDPOINTS ====================
 
 // Upload file first
@@ -268,7 +313,7 @@ router.post("/datasets/create", async (req, res) => {
 router.get("/datasets", async (req, res) => {
   try {
     const category = req.query.category;
-    let query = `SELECT d.*, u.username, u.rating as sellerRating FROM datasets d 
+    let query = `SELECT d.*, u.username, u.walletAddress as sellerWallet, u.rating as sellerRating FROM datasets d 
                  LEFT JOIN users u ON d.sellerId = u.id`;
     let params = [];
 

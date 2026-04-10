@@ -124,6 +124,21 @@ export async function completePurchase(purchaseId) {
   return await response.json();
 }
 
+export async function addReview(datasetId, walletAddress, rating, comment) {
+  const response = await fetch(`${BACKEND_URL}/reviews/add`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ datasetId, walletAddress, rating, comment })
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({}));
+    throw new Error(errorBody.error || "Review submission failed");
+  }
+
+  return await response.json();
+}
+
 export async function fetchProfile(walletAddress) {
   const response = await fetch(buildBackendUrl(`${BACKEND_URL}/profile`, { walletAddress }));
   if (!response.ok) {
@@ -133,6 +148,37 @@ export async function fetchProfile(walletAddress) {
   return await response.json();
 }
 
+export async function uploadAvatar(file) {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await fetch(`${BACKEND_URL}/upload`, {
+    method: "POST",
+    body: formData
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({ error: "Unknown error" }));
+    throw new Error(errorBody.error || "Avatar upload failed");
+  }
+
+  return await response.json();
+}
+
+export async function updateProfile(walletAddress, username, email, avatar) {
+  const response = await fetch(`${BACKEND_URL}/profile/update`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ walletAddress, username, email, avatar })
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({ error: "Unknown error" }));
+    throw new Error(errorBody.error || "Profile update failed");
+  }
+
+  return await response.json();
+}
 export async function fetchEarnings(walletAddress) {
   const response = await fetch(buildBackendUrl(`${BACKEND_URL}/earnings`, { walletAddress }));
   if (!response.ok) {

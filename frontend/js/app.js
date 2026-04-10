@@ -8,6 +8,8 @@ import {
   initiatePurchase,
   completePurchase,
   fetchProfile,
+  updateProfile,
+  uploadAvatar,
   fetchEarnings,
   fetchNotifications
 } from "./api.js";
@@ -197,6 +199,10 @@ async function handleSignup() {
     console.log("✅ Signup successful");
     
     appState.currentUser = result.user;
+    // Initialize wallet balance for new user
+    if (!appState.currentUser.walletBalance) {
+      appState.currentUser.walletBalance = 5000; // Initial wallet balance for new users
+    }
     saveCurrentUser();
     console.log("💾 User saved to localStorage");
     
@@ -360,6 +366,14 @@ function populateDatasetDetails() {
   document.getElementById("paymentBtnAmount").textContent = total;
   document.getElementById("downloadTitle").textContent = dataset.title;
   document.getElementById("downloadDescription").textContent = dataset.description || "Your dataset is ready to download.";
+
+  // Hide buy button if current user is the seller
+  const buyButton = document.getElementById("detail-buy-btn");
+  if (buyButton && appState.currentUser && dataset.sellerWallet === appState.currentUser.walletAddress) {
+    buyButton.style.display = "none";
+  } else if (buyButton) {
+    buyButton.style.display = "block";
+  }
 }
 
 function filterByCategory(category) {
@@ -377,8 +391,16 @@ async function handlePurchase() {
     return;
   }
 
+  // Prevent users from buying their own datasets
+  if (appState.currentDataset.sellerWallet === appState.currentUser.walletAddress) {
+    alert("You cannot purchase your own dataset.");
+    return;
+  }
+
   try {
     showLoading(true);
+    console.log('Processing payment via:', appState.selectedPaymentMethod || 'default');
+
     const purchase = await initiatePurchase(appState.currentDataset.id, appState.currentUser.walletAddress);
 
     // Only attempt blockchain purchase if dataset has blockchain ID
@@ -388,6 +410,15 @@ async function handlePurchase() {
       const priceValue = appState.currentDataset.price || 0;
       const priceWei = ethers.parseUnits(String(priceValue), "ether");
       await buyDataset(blockchainId, priceWei);
+      console.log('Blockchain transaction completed via', appState.selectedPaymentMethod || 'blockchain');
+
+      // If wallet payment was selected, deduct from wallet balance
+      if (appState.selectedPaymentMethod === 'wallet') {
+        const totalAmount = appState.currentDataset.price + Math.round(appState.currentDataset.price * 0.18);
+        appState.currentUser.walletBalance = (appState.currentUser.walletBalance || 0) - totalAmount;
+        saveCurrentUser();
+        console.log('Wallet balance deducted. New balance:', appState.currentUser.walletBalance);
+      }
     } else {
       console.warn("Skipping blockchain purchase - dataset not registered on blockchain");
     }
@@ -405,7 +436,83 @@ async function handlePurchase() {
 }
 
 function processPayment() {
+  // Get selected payment method
+  const selectedPayment = document.querySelector('input[name="payment"]:checked');
+  if (!selectedPayment) {
+    alert("Please select a payment method.");
+    return;
+  }
+
+  const paymentMethod = selectedPayment.value;
+  console.log('Selected payment method:', paymentMethod);
+
+  // For card payment, ensure form is visible and validated
+  if (paymentMethod === 'card') {
+    const cardDetails = document.getElementById('cardDetails');
+    if (cardDetails) {
+      cardDetails.style.display = 'block';
+      cardDetails.scrollIntoView({ behavior: 'smooth' });
+    }
+  }
+
+  // Validate payment method
+  if (!validatePaymentMethod(paymentMethod)) {
+    return;
+  }
+
+  // Store selected payment method for processing
+  appState.selectedPaymentMethod = paymentMethod;
+
+  // Proceed with purchase
   handlePurchase();
+}
+
+function validatePaymentMethod(method) {
+  const total = parseInt(document.getElementById('paymentTotal')?.textContent || '0');
+  const currentUser = appState.currentUser || JSON.parse(localStorage.getItem('dataMarketplaceUser') || '{}');
+
+  switch (method) {
+    case 'card':
+      const cardNumber = document.getElementById('cardNumber')?.value?.trim();
+      const cardExpiry = document.getElementById('cardExpiry')?.value?.trim();
+      const cardCVV = document.getElementById('cardCVV')?.value?.trim();
+      const cardName = document.getElementById('cardName')?.value?.trim();
+
+      if (!cardNumber || !cardExpiry || !cardCVV || !cardName) {
+        alert('Please fill in all card details.');
+        return false;
+      }
+
+      // Basic validation
+      if (cardNumber.replace(/\s/g, '').length < 13) {
+        alert('Please enter a valid card number.');
+        return false;
+      }
+
+      if (!/^\d{2}\/\d{2}$/.test(cardExpiry)) {
+        alert('Please enter expiry date in MM/YY format.');
+        return false;
+      }
+
+      if (cardCVV.length < 3) {
+        alert('Please enter a valid CVV.');
+        return false;
+      }
+
+      return true;
+
+    case 'wallet':
+      const walletBalance = currentUser.walletBalance || 0;
+      if (walletBalance < total) {
+        alert(`Insufficient wallet balance. You have ₹${walletBalance} but need ₹${total}. Please choose another payment method.`);
+        return false;
+      }
+      return true;
+
+    case 'upi':
+    default:
+      return true;
+  }
 }
 
 function downloadFile() {
@@ -539,6 +646,10 @@ async function loadProfile() {
     const user = profile.user || appState.currentUser;
 
     document.getElementById("profileUsername").textContent = user.username || user.walletAddress || "User";
+    if (user.avatar) {
+      const avatarImg = document.getElementById("profileAvatar");
+      if (avatarImg) avatarImg.src = user.avatar;
+    }
     document.getElementById("profileUploaded").textContent = profile.uploadedCount || 0;
     document.getElementById("profilePurchased").textContent = profile.purchasedCount || 0;
     document.getElementById("profileRating").textContent = Number(user.rating || 0).toFixed(1);
@@ -569,7 +680,90 @@ async function loadProfile() {
 }
 
 function editProfile() {
-  alert("Edit profile is not yet implemented. Stay tuned.");
+  const panel = document.getElementById("profileEditPanel");
+  const message = document.getElementById("profileEditMessage");
+  if (!panel) return;
+
+  const usernameInput = document.getElementById("profileEditUsername");
+  const emailInput = document.getElementById("profileEditEmail");
+  const user = appState.currentUser || {};
+
+  usernameInput.value = user.username || "";
+  emailInput.value = user.email || "";
+  document.getElementById("profileEditAvatarPreview").src = user.avatar || "https://via.placeholder.com/100";
+  message.textContent = "";
+  panel.style.display = "block";
+  panel.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function previewProfileAvatar(event) {
+  const file = event.target.files[0];
+  const preview = document.getElementById("profileEditAvatarPreview");
+  if (file && preview) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      preview.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+function cancelProfileEdit() {
+  const panel = document.getElementById("profileEditPanel");
+  if (panel) {
+    panel.style.display = "none";
+  }
+}
+
+async function saveProfile() {
+  const usernameInput = document.getElementById("profileEditUsername");
+  const emailInput = document.getElementById("profileEditEmail");
+  const message = document.getElementById("profileEditMessage");
+
+  const username = usernameInput.value.trim();
+  const email = emailInput.value.trim();
+  const currentUser = appState.currentUser;
+
+  if (!currentUser?.walletAddress) {
+    alert("Please login before editing your profile.");
+    return;
+  }
+
+  if (!username || !email) {
+    message.textContent = "Please provide both username and email.";
+    message.style.color = "#d14343";
+    return;
+  }
+
+  try {
+    message.textContent = "Saving profile...";
+    message.style.color = "#475569";
+
+    let avatarUrl = currentUser.avatar;
+    const avatarFile = document.getElementById("profileEditAvatar")?.files?.[0];
+    if (avatarFile) {
+      const uploadResult = await uploadAvatar(avatarFile);
+      avatarUrl = uploadResult.avatarUrl || uploadResult.url || uploadResult.hash ? `https://ipfs.io/ipfs/${uploadResult.hash}` : avatarUrl;
+    }
+
+    const result = await updateProfile(currentUser.walletAddress, username, email, avatarUrl);
+    const updatedUser = result.user;
+
+    appState.currentUser = { ...appState.currentUser, ...updatedUser };
+    saveCurrentUser();
+
+    document.getElementById("profileUsername").textContent = updatedUser.username || updatedUser.walletAddress || "User";
+    if (updatedUser.avatar) {
+      const avatarImg = document.getElementById("profileAvatar");
+      if (avatarImg) avatarImg.src = updatedUser.avatar;
+    }
+    message.textContent = "Profile updated successfully.";
+    message.style.color = "#1f7a32";
+    setTimeout(() => cancelProfileEdit(), 1200);
+  } catch (error) {
+    message.textContent = error.message || "Unable to update profile.";
+    message.style.color = "#d14343";
+  }
 }
 
 async function loadEarnings() {
@@ -687,6 +881,9 @@ window.viewInBrowser = viewInBrowser;
 window.uploadDataset = uploadDataset;
 window.copyShareLink = copyShareLink;
 window.editProfile = editProfile;
+window.saveProfile = saveProfile;
+window.cancelProfileEdit = cancelProfileEdit;
+window.previewProfileAvatar = previewProfileAvatar;
 window.requestWithdrawal = requestWithdrawal;
 window.clearAllNotifications = clearAllNotifications;
 window.viewDatasetDetails = viewDatasetDetails;

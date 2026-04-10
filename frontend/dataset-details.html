@@ -57,7 +57,7 @@
             <p class="label">Price</p>
             <p class="price">₹<span id="detail-price">100</span></p>
           </div>
-          <a href="payment.html" class="btn-primary btn-large" style="display: inline-block; text-decoration: none;">Buy & Download</a>
+          <button id="detail-buy-btn" class="btn-primary btn-large" onclick="handleBuy()">Buy & Download</button>
         </div>
       </div>
     </div>
@@ -75,6 +75,56 @@
       document.getElementById('detail-price').textContent = dataset.price;
       localStorage.setItem('currentPrice', dataset.price);
     }
+  </script>
+
+  <script type="module">
+    import { ethers } from "https://cdn.jsdelivr.net/npm/ethers@6.9.0/dist/ethers.min.js";
+    import { initializeContract, buyDataset } from "./js/contract.js";
+    import { initiatePurchase, completePurchase } from "./js/api.js";
+
+    window.handleBuy = async function() {
+      try {
+        // Check if user is logged in
+        const currentUser = JSON.parse(localStorage.getItem('dataMarketplaceUser') || 'null');
+        if (!currentUser) {
+          alert('Please login first to purchase datasets.');
+          window.location.href = 'landing.html';
+          return;
+        }
+
+        // Load dataset
+        const dataset = JSON.parse(localStorage.getItem('selectedDataset') || '{}');
+        if (!dataset.id) {
+          alert('Dataset not found. Please try again.');
+          return;
+        }
+
+        console.log('Starting purchase for dataset:', dataset);
+
+        // Step 1: Initiate purchase (creates purchase record)
+        console.log('Initiating purchase...');
+        const purchase = await initiatePurchase(dataset.id, currentUser.walletAddress);
+        console.log('Purchase initiated:', purchase);
+
+        // Step 2: Blockchain transaction
+        console.log('Processing blockchain transaction...');
+        const priceWei = ethers.parseUnits(dataset.price.toString(), "gwei");
+        await buyDataset(dataset.blockchainId || 0, priceWei);
+        console.log('Blockchain transaction completed');
+
+        // Step 3: Complete purchase
+        console.log('Completing purchase...');
+        await completePurchase(purchase.purchaseId);
+        console.log('Purchase completed');
+
+        // Redirect to download page
+        window.location.href = 'download.html';
+
+      } catch (error) {
+        console.error('Purchase failed:', error);
+        alert('Purchase failed: ' + (error.message || error.toString()));
+      }
+    };
   </script>
 </body>
 </html>

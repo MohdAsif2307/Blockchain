@@ -41,7 +41,7 @@
           <span class="method-icon">💳</span>
           <div class="method-info">
             <p>UPI</p>
-            <small>Google Pay, PhonePe, Paytm</small>
+            <small>Google Pay, PhonePe, Paytm, BHIM UPI</small>
           </div>
         </label>
         <label class="payment-option">
@@ -49,20 +49,43 @@
           <span class="method-icon">🏦</span>
           <div class="method-info">
             <p>Credit/Debit Card</p>
-            <small>Visa, Mastercard, AmEx</small>
+            <small>Visa, Mastercard, AmEx, RuPay</small>
           </div>
         </label>
         <label class="payment-option">
           <input type="radio" name="payment" value="wallet" />
           <span class="method-icon">👛</span>
           <div class="method-info">
-            <p>Wallet</p>
-            <small>Use account balance</small>
+            <p>Wallet Balance</p>
+            <small>₹<span id="walletBalance">0</span> available</small>
           </div>
         </label>
       </div>
 
-      <button class="btn-primary btn-large" onclick="window.location.href='processing.html'">Pay Now</button>
+      <!-- Card Details Form (hidden by default) -->
+      <div id="cardDetails" class="payment-form" style="display: none;">
+        <h4>Enter Card Details</h4>
+        <div class="form-group">
+          <label>Card Number</label>
+          <input type="text" id="cardNumber" placeholder="1234 5678 9012 3456" maxlength="19" />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Expiry Date</label>
+            <input type="text" id="cardExpiry" placeholder="MM/YY" maxlength="5" />
+          </div>
+          <div class="form-group">
+            <label>CVV</label>
+            <input type="text" id="cardCVV" placeholder="123" maxlength="4" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Cardholder Name</label>
+          <input type="text" id="cardName" placeholder="John Doe" />
+        </div>
+      </div>
+
+      <button class="btn-primary btn-large" onclick="processPayment()">Pay Now</button>
     </div>
   </div>
 
@@ -78,6 +101,213 @@
 
     // Store total for next page
     localStorage.setItem('orderTotal', total);
+
+    // Load wallet balance
+    loadWalletBalance();
+
+    // Handle payment method selection
+    document.querySelectorAll('input[name="payment"]').forEach(radio => {
+      radio.addEventListener('change', function() {
+        const cardDetails = document.getElementById('cardDetails');
+        if (this.value === 'card') {
+          cardDetails.style.display = 'block';
+        } else {
+          cardDetails.style.display = 'none';
+        }
+      });
+    });
+
+    // Card input formatting
+    const cardNumberInput = document.getElementById('cardNumber');
+    if (cardNumberInput) {
+      cardNumberInput.addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\s/g, '');
+        value = value.replace(/\D/g, '');
+        value = value.replace(/(\d{4})(?=\d)/g, '$1 ');
+        e.target.value = value.trim();
+      });
+    }
+
+    const cardExpiryInput = document.getElementById('cardExpiry');
+    if (cardExpiryInput) {
+      cardExpiryInput.addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length >= 2) {
+          value = value.slice(0, 2) + '/' + value.slice(2, 4);
+        }
+        e.target.value = value;
+      });
+    }
+
+    const cardCVVInput = document.getElementById('cardCVV');
+    if (cardCVVInput) {
+      cardCVVInput.addEventListener('input', function(e) {
+        e.target.value = e.target.value.replace(/\D/g, '');
+      });
+    }
+
+    async function loadWalletBalance() {
+      try {
+        const currentUser = JSON.parse(localStorage.getItem('dataMarketplaceUser') || 'null');
+        if (currentUser) {
+          // Use actual wallet balance from user object
+          const balance = currentUser.walletBalance || 5000; // Default balance
+          document.getElementById('walletBalance').textContent = balance;
+        }
+      } catch (error) {
+        console.error('Error loading wallet balance:', error);
+        document.getElementById('walletBalance').textContent = '5000'; // Fallback balance
+      }
+    }
+
+    async function processPayment() {
+      try {
+        // Check if user is logged in
+        const currentUser = JSON.parse(localStorage.getItem('dataMarketplaceUser') || 'null');
+        if (!currentUser) {
+          alert('Please login first to purchase datasets.');
+          window.location.href = 'landing.html';
+          return;
+        }
+
+        // Load dataset
+        const dataset = JSON.parse(localStorage.getItem('selectedDataset') || '{}');
+        if (!dataset.id) {
+          alert('Dataset not found. Please try again.');
+          return;
+        }
+
+        // Get selected payment method
+        const selectedPayment = document.querySelector('input[name="payment"]:checked').value;
+        console.log('Selected payment method:', selectedPayment);
+
+        // Validate payment method specific requirements
+        if (!validatePaymentMethod(selectedPayment)) {
+          return;
+        }
+
+        console.log('Starting purchase for dataset:', dataset);
+
+        // Step 1: Initiate purchase (creates purchase record)
+        console.log('Initiating purchase...');
+        const purchase = await initiatePurchase(dataset.id, currentUser.walletAddress);
+        console.log('Purchase initiated:', purchase);
+
+        // Step 2: Process payment based on method
+        console.log('Processing payment via', selectedPayment);
+        await processPaymentMethod(selectedPayment, dataset, total);
+
+        // Step 3: Complete purchase
+        console.log('Completing purchase...');
+        await completePurchase(purchase.purchaseId);
+        console.log('Purchase completed');
+
+        // Redirect to processing page
+        window.location.href = 'processing.html';
+
+      } catch (error) {
+        console.error('Purchase failed:', error);
+        alert('Purchase failed: ' + (error.message || error.toString()));
+      }
+    }
+
+    function validatePaymentMethod(method) {
+      switch (method) {
+        case 'card':
+          const cardNumber = document.getElementById('cardNumber').value.trim();
+          const cardExpiry = document.getElementById('cardExpiry').value.trim();
+          const cardCVV = document.getElementById('cardCVV').value.trim();
+          const cardName = document.getElementById('cardName').value.trim();
+
+          if (!cardNumber || !cardExpiry || !cardCVV || !cardName) {
+            alert('Please fill in all card details.');
+            return false;
+          }
+
+          // Basic validation
+          if (cardNumber.replace(/\s/g, '').length < 13) {
+            alert('Please enter a valid card number.');
+            return false;
+          }
+
+          if (!/^\d{2}\/\d{2}$/.test(cardExpiry)) {
+            alert('Please enter expiry date in MM/YY format.');
+            return false;
+          }
+
+          if (cardCVV.length < 3) {
+            alert('Please enter a valid CVV.');
+            return false;
+          }
+
+          return true;
+
+        case 'wallet':
+          const currentUser = JSON.parse(localStorage.getItem('dataMarketplaceUser') || '{}');
+          const walletBalance = currentUser.walletBalance || 0;
+          if (walletBalance < total) {
+            alert(`Insufficient wallet balance. You have ₹${walletBalance} but need ₹${total}. Please choose another payment method.`);
+            return false;
+          }
+          return true;
+
+        case 'upi':
+        default:
+          return true;
+      }
+    }
+
+    async function processPaymentMethod(method, dataset, amount) {
+      // All payment methods ultimately go through blockchain for this marketplace
+      // The payment method selection affects user experience but not the underlying transaction
+
+      switch (method) {
+        case 'card':
+          console.log('Processing card payment...');
+          // In a real implementation, this would integrate with a payment gateway
+          // For now, we proceed with blockchain transaction
+          break;
+
+        case 'wallet':
+          console.log('Processing wallet payment...');
+          // Wallet balance will be deducted after successful blockchain transaction
+          break;
+
+        case 'upi':
+        default:
+          console.log('Processing UPI payment...');
+          break;
+      }
+
+      // Execute blockchain transaction for all methods
+      const priceWei = ethers.parseUnits(dataset.price.toString(), "gwei");
+      await buyDataset(dataset.blockchainId || 0, priceWei);
+      console.log('Blockchain transaction completed for', method);
+
+      // If wallet payment was selected, deduct from wallet balance
+      if (method === 'wallet') {
+        try {
+          const currentUser = JSON.parse(localStorage.getItem('dataMarketplaceUser') || '{}');
+          if (currentUser) {
+            const totalAmount = amount || total;
+            currentUser.walletBalance = (currentUser.walletBalance || 0) - totalAmount;
+            localStorage.setItem('dataMarketplaceUser', JSON.stringify(currentUser));
+            console.log('Wallet balance deducted. New balance:', currentUser.walletBalance);
+          }
+        } catch (error) {
+          console.error('Error deducting wallet balance:', error);
+        }
+      }
+    }
+  </script>
+
+  <script type="module">
+    import { ethers } from "https://cdn.jsdelivr.net/npm/ethers@6.9.0/dist/ethers.min.js";
+    import { initializeContract, buyDataset } from "./js/contract.js";
+    import { initiatePurchase, completePurchase } from "./js/api.js";
+
+    window.processPayment = processPayment;
+  </script>
   </script>
 </body>
 </html>

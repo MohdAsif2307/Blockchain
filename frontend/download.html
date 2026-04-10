@@ -81,8 +81,29 @@
     </div>
 
     <div class="download-actions">
-      <a href="#" class="btn-primary" onclick="downloadDataset()">📥 Download File</a>
-      <a href="#" class="btn-secondary" onclick="viewBrowser()">🔍 View in Browser</a>
+      <a href="#" class="btn-primary" onclick="downloadDataset()">Download File</a>
+      <a href="#" class="btn-secondary" onclick="viewBrowser()">View in Browser</a>
+    </div>
+
+    <div class="review-panel" style="display: block !important; visibility: visible !important; margin-top: 30px; padding: 20px; border: 2px solid #007bff; background: #ffffff; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+      <h3 style="color: #333; margin-bottom: 15px;">Leave a review</h3>
+      <p class="review-hint" style="color: #666; margin-bottom: 20px;">Share feedback so other buyers can make confident decisions.</p>
+      <div class="review-row" style="margin-bottom: 15px;">
+        <label for="reviewRating" style="display: block; margin-bottom: 5px; font-weight: bold;">Rating</label>
+        <select id="reviewRating" class="profile-input review-select" style="width: 200px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+          <option value="5">5 - Excellent</option>
+          <option value="4">4 - Very Good</option>
+          <option value="3">3 - Good</option>
+          <option value="2">2 - Fair</option>
+          <option value="1">1 - Poor</option>
+        </select>
+      </div>
+      <div class="review-row" style="margin-bottom: 15px;">
+        <label for="reviewComment" style="display: block; margin-bottom: 5px; font-weight: bold;">Comment</label>
+        <textarea id="reviewComment" class="profile-input review-textarea" style="width: 100%; min-height: 100px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; resize: vertical;" placeholder="Tell others what you liked about this dataset"></textarea>
+      </div>
+      <button class="btn-primary btn-block" onclick="submitReview()" style="background: #007bff; color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; width: 100%;">Submit Review</button>
+      <p id="reviewMessage" class="review-message" style="margin-top: 10px; font-weight: bold;"></p>
     </div>
 
     <a href="dashboard.html" class="btn-link" style="margin-top: 20px;">← Back to Dashboard</a>
@@ -90,8 +111,12 @@
 
   <script>
     // Load order information
+    console.log('Download page loaded');
     const dataset = JSON.parse(localStorage.getItem('selectedDataset') || '{}');
     const total = localStorage.getItem('orderTotal') || '177';
+
+    console.log('Dataset:', dataset);
+    console.log('Total:', total);
 
     if (dataset.title) {
       document.getElementById('download-dataset').textContent = dataset.title;
@@ -105,6 +130,53 @@
 
     function viewBrowser() {
       alert('Opening dataset preview in new tab...');
+    }
+
+    async function submitReview() {
+      const rating = parseInt(document.getElementById('reviewRating').value, 10);
+      const comment = document.getElementById('reviewComment').value.trim();
+      const reviewMessage = document.getElementById('reviewMessage');
+
+      const currentUser = JSON.parse(localStorage.getItem('dataMarketplaceUser') || 'null');
+      const walletAddress = currentUser?.walletAddress || localStorage.getItem('walletAddress');
+
+      if (!walletAddress) {
+        reviewMessage.textContent = 'Please login to submit your review.';
+        reviewMessage.style.color = '#d14343';
+        return;
+      }
+
+      if (!dataset.id) {
+        reviewMessage.textContent = 'Unable to identify purchased dataset.';
+        reviewMessage.style.color = '#d14343';
+        return;
+      }
+
+      if (!comment) {
+        reviewMessage.textContent = 'Please add a comment to submit your review.';
+        reviewMessage.style.color = '#d14343';
+        return;
+      }
+
+      try {
+        const response = await fetch(`${window.location.origin}/api/reviews/add`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ datasetId: dataset.id, walletAddress, rating, comment })
+        });
+
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.error || 'Review submission failed');
+        }
+
+        reviewMessage.textContent = result.message || 'Review submitted successfully.';
+        reviewMessage.style.color = '#1f7a32';
+        document.getElementById('reviewComment').value = '';
+      } catch (error) {
+        reviewMessage.textContent = error.message;
+        reviewMessage.style.color = '#d14343';
+      }
     }
   </script>
 </body>
